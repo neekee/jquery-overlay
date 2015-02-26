@@ -136,12 +136,6 @@
         })
       );
 
-      // Setup textarea
-      this.$textarea = $textarea.css(css.textarea);
-
-      // Render wrapper and overlay
-      this.$textarea.wrap($wrapper).before(this.$el);
-
       // Add styles that depend on which type of input field this is attached to
       if ($textarea.is("input[type='text']")) {
         $wrapper.addClass("with-input");
@@ -155,6 +149,12 @@
         $textarea.css('overflow-y', 'scroll');
         this.$el.css('margin', 0);
       }
+
+      // Setup textarea
+      this.$textarea = $textarea.css(css.textarea);
+
+      // Render wrapper and overlay
+      this.$textarea.wrap($wrapper).before(this.$el);
 
       // Intercept val method
       // Note that jQuery.fn.val does not trigger any event.
