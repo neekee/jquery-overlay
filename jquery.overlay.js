@@ -85,8 +85,7 @@
         position: 'absolute',
         color: 'transparent',
         'white-space': 'pre-wrap',
-        'word-wrap': 'break-word',
-        overflow: 'hidden'
+        'word-wrap': 'break-word'
       },
       textarea: {
         background: 'transparent',
@@ -127,6 +126,7 @@
 
       // Setup overlay
       this.textareaTop = parseInt($textarea.css('border-top-width'));
+      this.textareaLeft = parseInt($textarea.css('border-left-width'));
       this.$el = $(html.overlay).css(
         $.extend({}, css.overlay, getStyles($textarea, textareaToOverlay), {
           top: this.textareaTop,
@@ -142,6 +142,20 @@
       // Render wrapper and overlay
       this.$textarea.wrap($wrapper).before(this.$el);
 
+      // Add styles that depend on which type of input field this is attached to
+      if ($textarea.is("input[type='text']")) {
+        $wrapper.addClass("with-input");
+        this.$el.css('white-space', 'nowrap');
+        if ($textarea.css('width') == "100%") {
+          $wrapper.css('width', "100%");
+        }
+      } else if ($textarea.is("textarea")) {
+        $wrapper.addClass("with-textarea");
+        $textarea.css('margin', 0);
+        $textarea.css('overflow-y', 'scroll');
+        this.$el.css('margin', 0);
+      }
+
       // Intercept val method
       // Note that jQuery.fn.val does not trigger any event.
       this.$textarea.origVal = $textarea.val;
@@ -149,10 +163,15 @@
 
       // Bind event handlers
       this.$textarea.on({
-        'input.overlay':  $.proxy(this.onInput,       this),
-        'change.overlay': $.proxy(this.onInput,       this),
-        'scroll.overlay': $.proxy(this.resizeOverlay, this),
-        'resize.overlay': $.proxy(this.resizeOverlay, this)
+        'input.overlay':   $.proxy(this.onInput,       this),
+        'change.overlay':  $.proxy(this.onInput,       this),
+        'scroll.overlay':  $.proxy(this.resizeOverlay, this),
+        'resize.overlay':  $.proxy(this.resizeOverlay, this),
+        'keydown.overlay': $.proxy(this.resizeOverlay, this),
+        'keyup.overlay':   $.proxy(this.resizeOverlay, this),
+        'focus.overlay':   $.proxy(this.resizeOverlay, this),
+        'blur.overlay':    $.proxy(this.resizeOverlay, this),
+        'click.overlay':   $.proxy(this.resizeOverlay, this)
       });
 
       this.strategies = [];
@@ -171,6 +190,7 @@
 
       onInput: function (e) {
         this.renderTextOnOverlay();
+        this.resizeOverlay();
       },
 
       renderTextOnOverlay: function () {
@@ -215,6 +235,11 @@
 
       resizeOverlay: function () {
         this.$el.css({ top: this.textareaTop - this.$textarea.scrollTop() });
+        this.$el.css({ left: this.textareaLeft - this.$textarea.scrollLeft() });
+        if (this.$textarea.is("textarea")) {
+          this.$el.css({ width: this.$textarea.width() - parseInt(this.$textarea.css('padding-left')) - parseInt(this.$textarea.css('padding-right')) });
+          this.$el.css({ 'padding-right': this.$textarea.width() - this.$el.width() + parseInt(this.$textarea.css('padding-right'))});
+        }
       },
 
       register: function (strategies) {
