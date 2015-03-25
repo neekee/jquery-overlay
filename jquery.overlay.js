@@ -211,23 +211,40 @@
           // Style attribute's string
           style = 'background-color:' + strategy.css['background-color'];
 
-          text.contents().each(function () {
-            var text, html, str, prevIndex;
-            if (this.nodeType != Node.TEXT_NODE) return;
-            text = this.textContent;
+          if (overlap) {
+            var textContent, prevIndex, str, html;
+            textContent = text.html()
             html = '';
             for (prevIndex = match.lastIndex = 0;; prevIndex = match.lastIndex) {
-              str = match.exec(text);
+              str = match.exec(textContent);
               if (!str) {
-                if (prevIndex) html += escape(text.substr(prevIndex));
+                if (prevIndex) html += textContent.substr(prevIndex);
                 break;
               }
               str = str[0];
-              html += escape(text.substr(prevIndex, match.lastIndex - prevIndex - str.length));
-              html += '<span style="' + style + '">' + escape(str) + '</span>';
+              html += textContent.substr(prevIndex, match.lastIndex - prevIndex - str.length);
+              html += '<span style="' + style + '">' + str + '</span>';
             };
-            if (prevIndex) $(this).replaceWith(html);
-          });
+            if (prevIndex) text.html(html);
+          } else {
+            text.contents().each(function () {
+              var text, html, str, prevIndex;
+              if (this.nodeType != Node.TEXT_NODE) return;
+              text = this.textContent;
+              html = '';
+              for (prevIndex = match.lastIndex = 0; ; prevIndex = match.lastIndex) {
+                str = match.exec(text);
+                if (!str) {
+                  if (prevIndex) html += escape(text.substr(prevIndex));
+                  break;
+                }
+                str = str[0];
+                html += escape(text.substr(prevIndex, match.lastIndex - prevIndex - str.length));
+                html += '<span style="' + style + '">' + escape(str) + '</span>';
+              };
+              if (prevIndex) $(this).replaceWith(html);
+            });
+          }
         }
         this.$el.html(text.contents());
         return this;
@@ -242,9 +259,12 @@
         }
       },
 
-      register: function (strategies) {
+      register: function (strategies, allowOverlapping) {
         strategies = $.isArray(strategies) ? strategies : [strategies];
         this.strategies = this.strategies.concat(strategies);
+        if (this.allowOverlapping == null) {
+          this.allowOverlapping = allowOverlapping;
+        }
         return this.renderTextOnOverlay();
       },
 
@@ -262,9 +282,12 @@
 
   })();
 
-  $.fn.overlay = function (strategies) {
+  $.fn.overlay = function (strategies, allowOverlapping) {
     var dataKey;
     dataKey = 'overlay';
+    if (allowOverlapping == null) {
+      allowOverlapping = false;
+    }
 
     if (strategies === 'destroy') {
       return this.each(function () {
@@ -281,7 +304,7 @@
         overlay = new Overlay($this);
         $this.data(dataKey, overlay);
       }
-      overlay.register(strategies);
+      overlay.register(strategies, allowOverlapping);
     });
   };
 
