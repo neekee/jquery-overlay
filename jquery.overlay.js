@@ -2,8 +2,9 @@
  * jQuery.textoverlay.js
  *
  * Repository: https://github.com/yuku-t/jquery-textoverlay
- * License:    MIT
- * Author:     Yuku Takahashi
+ * License:          MIT
+ * Original Author:  Yuku Takahashi
+ * Modifying Author: Niki Castle
  *
  * This version is from https://github.com/neekee/jquery-overlay/tree/master, which includes
  * modifications made to get this working for input fields and resizeable textareas, and to
@@ -216,22 +217,30 @@
           // Style attribute's string
           style = 'background-color:' + strategy.css['background-color'];
 
+          // Set up highlighting
           if (this.allowOverlapping) {
+            // Allow matching within an overlay that may already have been applied for another strategy
             var textContent, prevIndex, str, html;
-            textContent = text.html()
+            // Get the current html (including overlays added by previous strategies)
+            textContent = text.html();
             html = '';
-            for (prevIndex = match.lastIndex = 0;; prevIndex = match.lastIndex) {
+            for (prevIndex = match.lastIndex = 0; ; prevIndex = match.lastIndex) {
+              // Get all matches
               str = match.exec(textContent);
+              // If there are no messages, we're done with this strategy
               if (!str) {
                 if (prevIndex) html += textContent.substr(prevIndex);
                 break;
               }
+              // Apply an overlay to the first match
               str = str[0];
               html += textContent.substr(prevIndex, match.lastIndex - prevIndex - str.length);
               html += '<span style="' + style + '">' + str + '</span>';
             };
+            // Update the current html
             if (prevIndex) text.html(html);
           } else {
+            // Application of each strategy splits the string into individual nodes; consequent strategies are applied to each node
             text.contents().each(function () {
               var text, html, str, prevIndex;
               if (this.nodeType != Node.TEXT_NODE) return;
@@ -264,11 +273,11 @@
         }
       },
 
-      register: function (strategies, allowOverlapping) {
+      register: function (strategies, opts) {
         strategies = $.isArray(strategies) ? strategies : [strategies];
         this.strategies = this.strategies.concat(strategies);
         if (this.allowOverlapping == null) {
-          this.allowOverlapping = allowOverlapping;
+          this.allowOverlapping = opts.allowOverlapping;
         }
         return this.renderTextOnOverlay();
       },
@@ -287,11 +296,11 @@
 
   })();
 
-  $.fn.overlay = function (strategies, allowOverlapping) {
+  $.fn.overlay = function (strategies, opts) {
     var dataKey;
     dataKey = 'overlay';
-    if (allowOverlapping == null) {
-      allowOverlapping = false;
+    if (opts == null) {
+      opts = {};
     }
 
     if (strategies === 'destroy') {
@@ -309,7 +318,7 @@
         overlay = new Overlay($this);
         $this.data(dataKey, overlay);
       }
-      overlay.register(strategies, allowOverlapping);
+      overlay.register(strategies, opts);
     });
   };
 
