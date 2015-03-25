@@ -211,7 +211,7 @@
           // Style attribute's string
           style = 'background-color:' + strategy.css['background-color'];
 
-          if (overlap) {
+          if (this.allowOverlapping) {
             var textContent, prevIndex, str, html;
             textContent = text.html()
             html = '';
