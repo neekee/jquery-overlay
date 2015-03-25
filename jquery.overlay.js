@@ -4,6 +4,11 @@
  * Repository: https://github.com/yuku-t/jquery-textoverlay
  * License:    MIT
  * Author:     Yuku Takahashi
+ *
+ * This version is from https://github.com/neekee/jquery-overlay/tree/master, which includes
+ * modifications made to get this working for input fields and resizeable textareas, and to
+ * allow nested matching.
+ *
  */
 
 ;(function ($) {
