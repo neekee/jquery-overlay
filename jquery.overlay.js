@@ -224,7 +224,7 @@
             // Get the current html (including overlays added by previous strategies)
             textContent = text.html();
             html = '';
-            for (prevIndex = match.lastIndex = 0; ; prevIndex = match.lastIndex) {
+            for (prevIndex = match.lastIndex = 0; prevIndex < textContent.length; prevIndex = match.lastIndex) {
               // Get all matches
               str = match.exec(textContent);
               // If there are no messages, we're done with this strategy
