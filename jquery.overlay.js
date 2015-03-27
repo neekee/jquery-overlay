@@ -2,8 +2,14 @@
  * jQuery.textoverlay.js
  *
  * Repository: https://github.com/yuku-t/jquery-textoverlay
- * License:    MIT
- * Author:     Yuku Takahashi
+ * License:          MIT
+ * Original Author:  Yuku Takahashi
+ * Modifying Author: Niki Castle
+ *
+ * This version is from https://github.com/neekee/jquery-overlay/tree/master, which includes
+ * modifications made to get this working for input fields and resizeable textareas, and to
+ * allow nested matching.
+ *
  */
 
 ;(function ($) {
@@ -211,23 +217,48 @@
           // Style attribute's string
           style = 'background-color:' + strategy.css['background-color'];
 
-          text.contents().each(function () {
-            var text, html, str, prevIndex;
-            if (this.nodeType != Node.TEXT_NODE) return;
-            text = this.textContent;
+          // Set up highlighting
+          if (this.allowOverlapping) {
+            // Allow matching within an overlay that may already have been applied for another strategy
+            var textContent, prevIndex, str, html;
+            // Get the current html (including overlays added by previous strategies)
+            textContent = text.html();
             html = '';
-            for (prevIndex = match.lastIndex = 0;; prevIndex = match.lastIndex) {
-              str = match.exec(text);
+            for (prevIndex = match.lastIndex = 0; prevIndex < textContent.length; prevIndex = match.lastIndex) {
+              // Get all matches
+              str = match.exec(textContent);
+              // If there are no messages, we're done with this strategy
               if (!str) {
-                if (prevIndex) html += escape(text.substr(prevIndex));
+                if (prevIndex) html += textContent.substr(prevIndex);
                 break;
               }
+              // Apply an overlay to the first match
               str = str[0];
-              html += escape(text.substr(prevIndex, match.lastIndex - prevIndex - str.length));
-              html += '<span style="' + style + '">' + escape(str) + '</span>';
+              html += textContent.substr(prevIndex, match.lastIndex - prevIndex - str.length);
+              html += '<span style="' + style + '">' + str + '</span>';
             };
-            if (prevIndex) $(this).replaceWith(html);
-          });
+            // Update the current html
+            if (prevIndex) text.html(html);
+          } else {
+            // Application of each strategy splits the string into individual nodes; consequent strategies are applied to each node
+            text.contents().each(function () {
+              var text, html, str, prevIndex;
+              if (this.nodeType != Node.TEXT_NODE) return;
+              text = this.textContent;
+              html = '';
+              for (prevIndex = match.lastIndex = 0; ; prevIndex = match.lastIndex) {
+                str = match.exec(text);
+                if (!str) {
+                  if (prevIndex) html += escape(text.substr(prevIndex));
+                  break;
+                }
+                str = str[0];
+                html += escape(text.substr(prevIndex, match.lastIndex - prevIndex - str.length));
+                html += '<span style="' + style + '">' + escape(str) + '</span>';
+              };
+              if (prevIndex) $(this).replaceWith(html);
+            });
+          }
         }
         this.$el.html(text.contents());
         return this;
@@ -242,9 +273,12 @@
         }
       },
 
-      register: function (strategies) {
+      register: function (strategies, opts) {
         strategies = $.isArray(strategies) ? strategies : [strategies];
         this.strategies = this.strategies.concat(strategies);
+        if (this.allowOverlapping == null) {
+          this.allowOverlapping = opts.allowOverlapping;
+        }
         return this.renderTextOnOverlay();
       },
 
@@ -262,9 +296,12 @@
 
   })();
 
-  $.fn.overlay = function (strategies) {
+  $.fn.overlay = function (strategies, opts) {
     var dataKey;
     dataKey = 'overlay';
+    if (opts == null) {
+      opts = {};
+    }
 
     if (strategies === 'destroy') {
       return this.each(function () {
@@ -281,7 +318,7 @@
         overlay = new Overlay($this);
         $this.data(dataKey, overlay);
       }
-      overlay.register(strategies);
+      overlay.register(strategies, opts);
     });
   };
 
