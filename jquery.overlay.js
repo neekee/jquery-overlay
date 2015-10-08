@@ -169,15 +169,21 @@
 
       // Bind event handlers
       this.$textarea.on({
-        'input.overlay':   $.proxy(this.onInput,       this),
-        'change.overlay':  $.proxy(this.onInput,       this),
-        'scroll.overlay':  $.proxy(this.resizeOverlay, this),
-        'resize.overlay':  $.proxy(this.resizeOverlay, this),
-        'keydown.overlay': $.proxy(this.resizeOverlay, this),
-        'keyup.overlay':   $.proxy(this.resizeOverlay, this),
-        'focus.overlay':   $.proxy(this.resizeOverlay, this),
-        'blur.overlay':    $.proxy(this.resizeOverlay, this),
-        'click.overlay':   $.proxy(this.resizeOverlay, this)
+        'input.overlay':       $.proxy(this.onInput,       this),
+        'change.overlay':      $.proxy(this.onInput,       this),
+        'scroll.overlay':      $.proxy(this.resizeOverlay, this),
+        'resize.overlay':      $.proxy(this.resizeOverlay, this),
+        'keydown.overlay':     $.proxy(this.resizeOverlay, this),
+        'keyup.overlay':       $.proxy(this.resizeOverlay, this),
+        'focus.overlay':       $.proxy(this.resizeOverlay, this),
+        'blur.overlay':        $.proxy(this.resizeOverlay, this),
+        'click.overlay':       $.proxy(this.resizeOverlay, this),
+
+        // These events should technically be covered by events above, but fixes issues where
+        // the events weren't firing correctly in different browsers. See each event for event and browser(s).
+        // See https://github.com/neekee/jquery-overlay/issues/5 for more information.
+        'wheel.overlay':       $.proxy(this.resizeOverlay, this), // Overlaps with "scroll". Chrome, Opera
+        'DOMFocusOut.overlay': $.proxy(this.resizeOverlay, this)  // Overlaps with "blur". Chrome, Opera, Safari
       });
 
       this.strategies = [];
