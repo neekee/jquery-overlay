@@ -274,8 +274,8 @@
         this.$el.css({ top: this.textareaTop - this.$textarea.scrollTop() });
         this.$el.css({ left: this.textareaLeft - this.$textarea.scrollLeft() });
         if (this.$textarea.is("textarea")) {
-          this.$el.css({ width: this.$textarea.width() - parseInt(this.$textarea.css('padding-left')) - parseInt(this.$textarea.css('padding-right')) });
-          this.$el.css({ 'padding-right': this.$textarea.width() - this.$el.width() + parseInt(this.$textarea.css('padding-right'))});
+          this.$el.css({ width: this.$textarea.width() - parseInt(this.$textarea.css('padding-left')) - parseInt(this.$textarea.css('padding-right')) + 1 });
+          this.$el.css({ 'padding-right': parseInt(this.$textarea.css('padding-right')) });
         }
       },
 
