@@ -221,7 +221,9 @@
           }
 
           // Style attribute's string
-          style = 'background-color:' + strategy.css['background-color'];
+          style = Object.keys(strategy.css).map(function(propCSS) {
+            return propCSS + ': ' + strategy.css[propCSS]
+          }).join(';')
 
           // Set up highlighting
           if (this.allowOverlapping) {
