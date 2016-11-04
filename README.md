@@ -31,7 +31,7 @@ matchobject = ['a', 'b', 'c'];  // every 'a' 'b' and 'c' match
 matchObject = /\B@\w+/g; // every words start with @ match
 ```
 
-`cssObject` MUST be a Object. It controls the style of boxes which are put under the matching strings in the textarea.
+`cssObject` MUST be an Object. It controls the style of boxes which are put under the matching strings in the textarea.
 
 ```js
 cssObject = {

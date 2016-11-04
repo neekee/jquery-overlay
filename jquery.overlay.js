@@ -33,7 +33,7 @@
         $.each(properties, function (i, property) {
           styles[property] = $el.css(property);
         });
-        return styles
+        return styles;
       };
     }
   })();
@@ -45,9 +45,9 @@
     '"': '&quot;',
     "'": '&#x27;',
     '/': '&#x2F;'
-  }
+  };
 
-  var entityRegexe = /[&<>"'\/]/g
+  var entityRegexe = /[&<>"'\/]/g;
 
   /**
    * Function for escaping strings to HTML interpolation.
@@ -56,7 +56,7 @@
     if (typeof str !== 'undefined'){
       return str.replace(entityRegexe, function (match) {
         return entityMap[match];
-      })
+      });
     }
   };
 
