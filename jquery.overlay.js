@@ -247,7 +247,7 @@
             matches = [matches];
           }
           if (this.allowMultiPartMatching) {
-            matches = matches.map(function(match) {
+            matches = $.map(matches, function(match) {
               if ($.type(match) === "string") {
                 return new RegExp(match, 'g');
               } else {
