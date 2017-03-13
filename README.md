@@ -30,10 +30,10 @@ matchObject = 'abc';  // every 'abc' match
 matchObject = /\B@\w+/g; // every word starting with @ match
 
 // For arrays, without allowMultiPartMatching:
-matchobject = ['a', 'b', 'c'];  // every 'a' 'b' and 'c' match
+matchObject = ['a', 'b', 'c'];  // every 'a' 'b' and 'c' match
 
 // For arrays, with allowMultiPartMatching, each strategy in the array is applied to the results of the prior strategy, in left to right order.
-matchobject = ['/\{.*\}/', 'abc']; // every 'abc' that occurs within '{' and '}' match
+matchObject = ['/\{.*\}/', 'abc']; // every 'abc' that occurs within '{' and '}' match
 ```
 
 `cssObject` MUST be an Object. It controls the style of boxes which are put under the matching strings in the textarea.
