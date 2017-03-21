@@ -154,7 +154,7 @@
         if ($textarea.css('width') == "100%") {
           $wrapper.css('width', "100%");
         }
-        if ($textarea.css('margin-right')) {
+        if ($textarea.css('margin-right') && $textarea.css('margin-right') != "0px") {
           var marginRight = $textarea.css('margin-right');
           $textarea.css('margin-right', '0');
           $wrapper.css('margin-right', marginRight);
