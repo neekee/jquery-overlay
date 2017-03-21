@@ -93,7 +93,8 @@
         position: 'absolute',
         color: 'transparent',
         'white-space': 'pre-wrap',
-        'word-wrap': 'break-word'
+        'word-wrap': 'break-word',
+        'overflow': 'hidden'
       },
       textarea: {
         background: 'transparent',
