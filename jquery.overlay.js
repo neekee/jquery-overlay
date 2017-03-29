@@ -4,11 +4,13 @@
  * Repository: https://github.com/yuku-t/jquery-textoverlay
  * License:          MIT
  * Original Author:  Yuku Takahashi
- * Modifying Author: Niki Castle
+ * Modifying Authors: Niki Castle, Nick Willett-Jeffries
  *
- * This version is from https://github.com/neekee/jquery-overlay/tree/master, which includes
- * modifications made to get this working for input fields and resizeable textareas, and to
- * allow nested matching.
+ * This version is from https://github.com/nwj/jquery-overlay/tree/master, which introduces support for
+ * strategies that match using multiple regexes.
+ *
+ * It includes modifications introduced in https://github.com/neekee/jquery-overlay/tree/master to get this
+ * working for input fields and resizeable textareas, and to allow nested matching.
  *
  */
 
@@ -33,7 +35,7 @@
         $.each(properties, function (i, property) {
           styles[property] = $el.css(property);
         });
-        return styles
+        return styles;
       };
     }
   })();
@@ -45,9 +47,9 @@
     '"': '&quot;',
     "'": '&#x27;',
     '/': '&#x2F;'
-  }
+  };
 
-  var entityRegexe = /[&<>"'\/]/g
+  var entityRegexe = /[&<>"'\/]/g;
 
   /**
    * Function for escaping strings to HTML interpolation.
@@ -56,7 +58,7 @@
     if (typeof str !== 'undefined'){
       return str.replace(entityRegexe, function (match) {
         return entityMap[match];
-      })
+      });
     }
   };
 
@@ -145,15 +147,17 @@
       // Setup textarea
       this.$textarea = $textarea.css(css.textarea);
 
-      // Render wrapper and overlay
-      this.$textarea.wrap($wrapper).before(this.$el);
-
       // Add styles that depend on which type of input field this is attached to
       if ($textarea.is("input[type='text']")) {
-        $wrapper.addClass("with-input");
         this.$el.css('white-space', 'nowrap');
+        $wrapper.addClass("with-input");
         if ($textarea.css('width') == "100%") {
           $wrapper.css('width', "100%");
+        }
+        if ($textarea.css('margin-right') && $textarea.css('margin-right') != "0px") {
+          var marginRight = $textarea.css('margin-right');
+          $textarea.css('margin-right', '0');
+          $wrapper.css('margin-right', marginRight);
         }
       } else if ($textarea.is("textarea")) {
         $wrapper.addClass("with-textarea");
@@ -161,6 +165,9 @@
         $textarea.css('overflow-y', 'scroll');
         this.$el.css('margin', 0);
       }
+
+      // Render wrapper and overlay
+      this.$textarea.wrap($wrapper).before(this.$el);
 
       // Intercept val method
       // Note that jQuery.fn.val does not trigger any event.
@@ -206,63 +213,90 @@
       },
 
       renderTextOnOverlay: function () {
-        var text, i, l, strategy, match, style;
+        var text, i, l, strategy, matches, style, textContent, html, prevIndex, indexStringPairs;
         text = $('<div></div>').text(this.$textarea.val());
+
+        // Helper method. Given matches and text to match against, returns all substrings that match, and an
+        // index in the original text where each of those substrings begins.
+        function matchIndexStringPairs(matches, text) {
+          var indexStringPairs;
+          indexStringPairs = [{index: 0, string: text}];
+          matches.forEach(function(match) {
+            var nextIndexStringPairs;
+            nextIndexStringPairs = [];
+            indexStringPairs.forEach(function(pair) {
+              var matchedGroups, matchedString;
+              while ((matchedGroups = match.exec(pair.string)) !== null) {
+                matchedString = matchedGroups[0];
+                nextIndexStringPairs.push({index: pair.index + match.lastIndex - matchedString.length, string: matchedString});
+              }
+            });
+            indexStringPairs = nextIndexStringPairs;
+          });
+          return indexStringPairs;
+        }
 
         // Apply all strategies
         for (i = 0, l = this.strategies.length; i < l; i++) {
           strategy = this.strategies[i];
-          match = strategy.match;
-          if ($.isArray(match)) {
-            match = $.map(match, function (str) {
-              return str.replace(/(\(|\)|\|)/g, '\\$1');
+
+          // matching strategies are coerced to an array of one or more RegExps
+          matches = strategy.match;
+          if (!this.allowMultiPartMatching && $.isArray(matches)) {
+            matches = $.map(matches, function (str) {
+              return str.replace(/(\(|\)|\|)/g, '\$1');
             });
-            match = new RegExp('(' + match.join('|') + ')', 'g');
+            matches = new RegExp('(' + matches.join('|') + ')', 'g');
+          }
+          if (!$.isArray(matches)) {
+            matches = [matches];
+          }
+          if (this.allowMultiPartMatching) {
+            matches = $.map(matches, function(match) {
+              if ($.type(match) === "string") {
+                return new RegExp(match, 'g');
+              } else {
+                return match;
+              }
+            });
           }
 
           // Style attribute's string
-          style = 'background-color:' + strategy.css['background-color'];
+          style = Object.keys(strategy.css).map(function(propCSS) {
+            return propCSS + ': ' + strategy.css[propCSS];
+          }).join(';');
 
           // Set up highlighting
           if (this.allowOverlapping) {
             // Allow matching within an overlay that may already have been applied for another strategy
-            var textContent, prevIndex, str, html;
             // Get the current html (including overlays added by previous strategies)
             textContent = text.html();
             html = '';
-            for (prevIndex = match.lastIndex = 0; prevIndex < textContent.length; prevIndex = match.lastIndex) {
-              // Get all matches
-              str = match.exec(textContent);
-              // If there are no messages, we're done with this strategy
-              if (!str) {
-                if (prevIndex) html += textContent.substr(prevIndex);
-                break;
-              }
-              // Apply an overlay to the first match
-              str = str[0];
-              html += textContent.substr(prevIndex, match.lastIndex - prevIndex - str.length);
-              html += '<span style="' + style + '">' + str + '</span>';
-            };
-            // Update the current html
-            if (prevIndex) text.html(html);
+            indexStringPairs = matchIndexStringPairs(matches, textContent);
+            prevIndex = 0;
+            indexStringPairs.forEach(function(pair) {
+              html += textContent.substr(prevIndex, pair.index - prevIndex);
+              html += '<span style="' + style + '">' + pair.string + '</span>';
+              prevIndex = pair.index + pair.string.length;
+            });
+            html += textContent.substr(prevIndex);
+            text.html(html);
           } else {
             // Application of each strategy splits the string into individual nodes; consequent strategies are applied to each node
             text.contents().each(function () {
-              var text, html, str, prevIndex;
+              var text, html, prevIndex, indexStringPairs;
               if (this.nodeType != Node.TEXT_NODE) return;
               text = this.textContent;
               html = '';
-              for (prevIndex = match.lastIndex = 0; ; prevIndex = match.lastIndex) {
-                str = match.exec(text);
-                if (!str) {
-                  if (prevIndex) html += escape(text.substr(prevIndex));
-                  break;
-                }
-                str = str[0];
-                html += escape(text.substr(prevIndex, match.lastIndex - prevIndex - str.length));
-                html += '<span style="' + style + '">' + escape(str) + '</span>';
-              };
-              if (prevIndex) $(this).replaceWith(html);
+              indexStringPairs = matchIndexStringPairs(matches, text);
+              prevIndex = 0;
+              indexStringPairs.forEach(function(pair) {
+                html += text.substr(prevIndex, pair.index - prevIndex);
+                html += '<span style="' + style + '">' + escape(pair.string) + '</span>';
+                prevIndex = pair.index + pair.string.length;
+              });
+              html += escape(text.substr(prevIndex));
+              $(this).replaceWith(html);
             });
           }
         }
@@ -284,6 +318,9 @@
         this.strategies = this.strategies.concat(strategies);
         if (this.allowOverlapping == null) {
           this.allowOverlapping = opts.allowOverlapping;
+        }
+        if (this.allowMultiPartMatching == null) {
+          this.allowMultiPartMatching = opts.allowMultiPartMatching;
         }
         return this.renderTextOnOverlay();
       },
